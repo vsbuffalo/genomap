@@ -335,7 +335,7 @@ mod test {
         sm.insert("chr1", 1).unwrap();
         sm.insert("chr2", 2).unwrap();
 
-        assert_eq!(sm.indices(), vec![0, 1]);
+        assert_eq!(sm.indices(), 0..2);
 
         assert_eq!(sm.len(), 2);
         assert!(!sm.is_empty());
@@ -345,7 +345,7 @@ mod test {
         sm.insert("chr2", 1).unwrap();
         sm.insert("chr1", 2).unwrap();
 
-        assert_eq!(sm.indices(), vec![0, 1]);
+        assert_eq!(sm.indices(), 0..2);
     }
 
     #[test]
