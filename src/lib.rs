@@ -129,18 +129,12 @@ impl<T> GenomeMap<T> {
     pub fn get_by_index(&self, index: usize) -> Option<&T> {
         // get the name from the *external* index, i.e. the order of the names
         let name = self.get_name_by_index(index);
-        name.and_then(|key| self.get(&key))
+        name.and_then(|key| self.get(key))
     }
 
-    /// Return the name (e.g. chromosome or contig name) for the specified index. If not
-    /// present, will return `None`. This is *O(1)*.
-    pub fn get_name_by_index(&self, index: usize) -> Option<String> {
-        self.sorted_keys.get(index).cloned()
-    }
-
-    /// Return a reference (i.e. `&str`) to the name (e.g. chromosome or contig name) 
+    /// Return a reference (i.e. `&str`) to the name (e.g. chromosome or contig name)
     /// for the specified index. If not present, will return `None`. This is *O(1)*.
-    pub fn get_name_ref_by_index(&self, index: usize) -> Option<&str> {
+    pub fn get_name_by_index(&self, index: usize) -> Option<&str> {
         self.sorted_keys.get(index).as_ref().map(|x| x.as_str())
     }
 
