@@ -138,6 +138,12 @@ impl<T> GenomeMap<T> {
         self.sorted_keys.get(index).cloned()
     }
 
+    /// Return a reference (i.e. `&str`) to the name (e.g. chromosome or contig name) 
+    /// for the specified index. If not present, will return `None`. This is *O(1)*.
+    pub fn get_name_ref_by_index(&self, index: usize) -> Option<&str> {
+        self.sorted_keys.get(index).as_ref().map(|x| x.as_str())
+    }
+
     /// Return the index for a particular contig, by doing binary search.
     /// If the name is not found, returns `None`. This is *O(log(n))*
     /// where *n* is the number of elements.
@@ -169,8 +175,11 @@ impl<T> GenomeMap<T> {
     }
 
     /// Get the indices of the names (this is just `0..GenomeMap.len()`).
-    pub fn indices(&self) -> Vec<usize> {
-        Vec::from_iter(0..self.len())
+    pub fn indices(&self) -> std::ops::Range<usize> {
+        std::ops::Range {
+            start: 0,
+            end: self.len(),
+        }
     }
 
     /// O(1) check if a particular name is in the container.
