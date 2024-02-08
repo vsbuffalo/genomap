@@ -50,6 +50,10 @@
 //!
 //! If the ordering created by this system is not what you'd expect for your organism, please
 //! file an issue on GitHub: <http://github.com/vsbuffalo/genomemap/issues>
+//!
+//! [`GenomeMap.insert()`]: crate::GenomeMap::insert
+
+
 
 use fnv::FnvBuildHasher;
 use std::{cmp::Ordering, collections::HashMap};
