@@ -2,8 +2,11 @@
 name = "genomap"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+keywords = ["genomics", "bioinformatics", "compbio"]
+categories = ["science"]
+repository = "https://github.com/vsbuffalo/genomap"
+description = "A small library for storing generic genomic data indexed by a chromosome."
 
 [dependencies]
 fnv = "1.0.7"

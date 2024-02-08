@@ -1,8 +1,8 @@
-use std::collections::{HashMap,BTreeMap};
-use indexmap::IndexMap;
-use fnv::{FnvHashMap, FnvBuildHasher};
-use rand::{thread_rng, Rng};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use fnv::{FnvBuildHasher, FnvHashMap};
+use indexmap::IndexMap;
+use rand::{thread_rng, Rng};
+use std::collections::{BTreeMap, HashMap};
 
 use genomap::GenomeMap;
 
@@ -24,44 +24,54 @@ pub fn criterion_benchmark_creation(c: &mut Criterion) {
     let mut creation = c.benchmark_group("Creation");
 
     // GenomeMap creation benchmark
-    creation.bench_function("GenomeMap creation 22", |b| b.iter(|| {
-        let mut gm = GenomeMap::new();
-        for i in 1..=black_box(22) {
-            gm.insert(&chrom(i), random_vec(black_box(100))).unwrap();
-        }
-    }));
+    creation.bench_function("GenomeMap creation 22", |b| {
+        b.iter(|| {
+            let mut gm = GenomeMap::new();
+            for i in 1..=black_box(22) {
+                gm.insert(&chrom(i), random_vec(black_box(100))).unwrap();
+            }
+        })
+    });
 
     // HashMap creation benchmark
-    creation.bench_function("HashMap creation 22", |b| b.iter(|| {
-        let mut hm = HashMap::new();
-        for i in 1..=black_box(22) {
-            hm.insert(chrom(i), random_vec(black_box(100)));
-        }
-    }));
+    creation.bench_function("HashMap creation 22", |b| {
+        b.iter(|| {
+            let mut hm = HashMap::new();
+            for i in 1..=black_box(22) {
+                hm.insert(chrom(i), random_vec(black_box(100)));
+            }
+        })
+    });
 
     // FnvHashMap creation benchmark
-    creation.bench_function("FnvHashMap creation 22", |b| b.iter(|| {
-        let mut hm: FnvHashMap<String, Vec<f64>> = FnvHashMap::default();
-        for i in 1..=black_box(22) {
-            hm.insert(chrom(i), random_vec(black_box(100)));
-        }
-    }));
+    creation.bench_function("FnvHashMap creation 22", |b| {
+        b.iter(|| {
+            let mut hm: FnvHashMap<String, Vec<f64>> = FnvHashMap::default();
+            for i in 1..=black_box(22) {
+                hm.insert(chrom(i), random_vec(black_box(100)));
+            }
+        })
+    });
 
     // IndexMap creation benchmark
-    creation.bench_function("IndexMap creation 22", |b| b.iter(|| {
-        let mut hm: IndexMap<String, Vec<f64>> = IndexMap::new();
-        for i in 1..=black_box(22) {
-            hm.insert(chrom(i), random_vec(black_box(100)));
-        }
-    }));
+    creation.bench_function("IndexMap creation 22", |b| {
+        b.iter(|| {
+            let mut hm: IndexMap<String, Vec<f64>> = IndexMap::new();
+            for i in 1..=black_box(22) {
+                hm.insert(chrom(i), random_vec(black_box(100)));
+            }
+        })
+    });
 
     // BTreeMap creation benchmark
-    creation.bench_function("BTreeMap creation 22", |b| b.iter(|| {
-        let mut hm: BTreeMap<String, Vec<f64>> = BTreeMap::new();
-        for i in 1..=black_box(22) {
-            hm.insert(chrom(i), random_vec(black_box(100)));
-        }
-    }));
+    creation.bench_function("BTreeMap creation 22", |b| {
+        b.iter(|| {
+            let mut hm: BTreeMap<String, Vec<f64>> = BTreeMap::new();
+            for i in 1..=black_box(22) {
+                hm.insert(chrom(i), random_vec(black_box(100)));
+            }
+        })
+    });
 }
 
 pub fn criterion_benchmark_access(c: &mut Criterion) {
@@ -111,7 +121,7 @@ pub fn criterion_benchmark_access(c: &mut Criterion) {
         })
     });
 
-   // BTreeMap access benchmark
+    // BTreeMap access benchmark
     access.bench_function("BTreeMap access 22", |b| {
         let mut hm: BTreeMap<String, Vec<f64>> = BTreeMap::new();
         for i in 1..=22 {
@@ -198,9 +208,12 @@ pub fn criterion_benchmark_sorted(c: &mut Criterion) {
             }
         })
     });
-
 }
 
-criterion_group!(benches, criterion_benchmark_creation, criterion_benchmark_access, criterion_benchmark_sorted);
+criterion_group!(
+    benches,
+    criterion_benchmark_creation,
+    criterion_benchmark_access,
+    criterion_benchmark_sorted
+);
 criterion_main!(benches);
-

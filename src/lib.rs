@@ -1,21 +1,20 @@
-//! A fast, ordered map-like data structure for storing genomic data 
+//! A fast, ordered map-like data structure for storing genomic data
 //! associated with chromosomes.
 //!
 //!
 //! This sorts the names (e.g. chromosome or contig name) by doing the following:
 //! 1. Remove 'chr' if present.
-//! 2. See if the remaining bit is a number - if so, that comes first.
+//! 2. See if the remaining bit is a number - if so, that comes first. To handle *Drosophila*
+//!    chromosomes, it has a special rule to sort 2L and 2R into the integer autosomes.
 //! 3. Then, letters. But: order common sex chromosome names (X, Y, M, Z, W, O), then mitochondria,
 //!    then everything else.
 //!
-//! If the ordering created by this system is not what you'd expect for your organism, please 
+//! If the ordering created by this system is not what you'd expect for your organism, please
 //! file an issue on GitHub: http://github.com/vsbuffalo/genomemap/issues
 
-
+use fnv::FnvBuildHasher;
 use std::{cmp::Ordering, collections::HashMap};
 use thiserror::Error;
-use fnv::FnvBuildHasher;
-
 
 /// [`GenomeMap`] is an ordered, map-like data structure for storing genomic data associated with
 /// chromosomes.
@@ -23,7 +22,7 @@ use fnv::FnvBuildHasher;
 /// [`GenomeMap`] maintains an key-value mapping, much like an
 /// `[IndexMap](https://docs.rs/indexmap/1.9.3/indexmap/)`. However, while an `IndexMap` is ordered
 /// by insertion, the data we store in genomes should be ordered according to chromosome or contig
-/// name order. 
+/// name order.
 ///
 #[derive(Clone, Debug)]
 pub struct GenomeMap<T> {
@@ -50,19 +49,17 @@ impl<T> Default for GenomeMap<T> {
     }
 }
 
-
 #[derive(Debug, Error)]
 pub enum GenomeMapError {
     #[error("GenomeMap.insert() error: already contains the sequence '{0}'")]
     SequenceMapContainsSeqname(String),
 }
 
-
 impl<W, T> PartialEq<GenomeMap<W>> for GenomeMap<T>
 where
-T: PartialEq<W>,
-W: IntoIterator,
-T: IntoIterator,
+    T: PartialEq<W>,
+    W: IntoIterator,
+    T: IntoIterator,
 {
     fn eq(&self, other: &GenomeMap<W>) -> bool {
         self.iter()
@@ -82,7 +79,7 @@ impl<T> GenomeMap<T> {
         self.lookup.get(name).map(|idx| &self.values[*idx])
     }
 
-    /// Retrieve a reference to the value stored for the specified `index`. 
+    /// Retrieve a reference to the value stored for the specified `index`.
     pub fn get_by_index(&self, index: usize) -> Option<&T> {
         // get the name from the *external* index, i.e. the order of the names
         let name = self.get_name_by_index(index);
@@ -96,16 +93,16 @@ impl<T> GenomeMap<T> {
     }
 
     /// Return the index for a particular contig, by doing binary search.
-    /// If the name is not found, returns `None`. This is *O(log(n))* 
+    /// If the name is not found, returns `None`. This is *O(log(n))*
     /// where *n* is the number of elements.
     pub fn get_index_by_name(&self, name: &str) -> Option<usize> {
         match self
             .sorted_keys
             .binary_search_by(|probe| chromosome_probe(probe, name))
-            {
-                Ok(index) => Some(index),
-                Err(_) => None,
-            }
+        {
+            Ok(index) => Some(index),
+            Err(_) => None,
+        }
     }
 
     /// Get the ordered names. Their order corresponds to the indices.
@@ -152,36 +149,36 @@ impl<T> GenomeMap<T> {
         let index = match self
             .sorted_keys
             .binary_search_by(|probe| chromosome_probe(probe, name))
-            {
-                Ok(_) => {
-                    panic!("An internal error was encountered. Please report an issue: https://github.com/vsbuffalo/genomemap/issues");
-                }
-                Err(pos) => {
-                    self.sorted_keys.insert(pos, name.to_string());
-                    pos
-                }
-            };
+        {
+            Ok(_) => {
+                panic!("An internal error was encountered. Please report an issue: https://github.com/vsbuffalo/genomemap/issues");
+            }
+            Err(pos) => {
+                self.sorted_keys.insert(pos, name.to_string());
+                pos
+            }
+        };
         Ok(index)
     }
 
     /// Return a mutable reference to a value if the name is found,
     /// otherwise return a new default value.
     pub fn entry_or_default(&mut self, name: &str) -> &mut T
-        where
+    where
         T: Default,
-        {
-            let insertion_index = match self.lookup.get(name) {
-                Some(&index) => index,
-                None => {
-                    let new_entry = T::default();
-                    let _ = self.insert(name, new_entry).unwrap();
-                    // get the insertion_index in the lookup table
-                    *self.lookup.get(name).unwrap()
-                }
-            };
+    {
+        let insertion_index = match self.lookup.get(name) {
+            Some(&index) => index,
+            None => {
+                let new_entry = T::default();
+                let _ = self.insert(name, new_entry).unwrap();
+                // get the insertion_index in the lookup table
+                *self.lookup.get(name).unwrap()
+            }
+        };
 
-            &mut self.values[insertion_index]
-        }
+        &mut self.values[insertion_index]
+    }
 
     /// Iterate over `(name, &value)` tuples, ordered by name.
     pub fn iter(&self) -> impl Iterator<Item = (&String, &T)> {
@@ -197,9 +194,14 @@ impl<T> GenomeMap<T> {
 
     /// Get the values, ordered according to the sorted names order.
     pub fn values(&self) -> impl Iterator<Item = &T> {
-        self.sorted_keys
-            .iter()
-            .map(|name| self.get(name).unwrap())
+        self.sorted_keys.iter().map(|name| self.get(name).unwrap())
+    }
+
+    /// Shrink all internal data structures to fit.
+    pub fn shrink_to_fit(&mut self) {
+        self.lookup.shrink_to_fit();
+        self.reverse_lookup.shrink_to_fit();
+        self.sorted_keys.shrink_to_fit();
     }
 }
 
@@ -211,13 +213,16 @@ impl<T> GenomeMap<T> {
 /// want this likely reflect code smell.
 impl<'a, T> FromIterator<(String, T)> for GenomeMap<T>
 where
-T: 'a,
+    T: 'a,
 {
     fn from_iter<I: IntoIterator<Item = (String, T)>>(iter: I) -> Self {
         let mut genomap = GenomeMap::new();
 
         for (name, item) in iter {
-            let msg = format!("Invalid iterator: contains multiple entries for '{}', which would be clobbered.", name);
+            let msg = format!(
+                "Invalid iterator: contains multiple entries for '{}', which would be clobbered.",
+                name
+            );
             genomap.insert(&name, item).expect(&msg);
         }
         genomap
@@ -251,7 +256,9 @@ fn chromosome_probe(name: &str, target: &str) -> Ordering {
                     (8, None, chr_trimmed.to_string(), 0)
                 }
             }
-            _ if chr_trimmed.parse::<u32>().is_ok() => (1, Some(chr_trimmed.parse().unwrap()), String::new(), 0),
+            _ if chr_trimmed.parse::<u32>().is_ok() => {
+                (1, Some(chr_trimmed.parse().unwrap()), String::new(), 0)
+            }
             _ => (8, None, chr_trimmed.to_string(), 0),
         }
     };
@@ -261,7 +268,6 @@ fn chromosome_probe(name: &str, target: &str) -> Ordering {
 
     name_parts.cmp(&target_parts)
 }
-
 
 #[cfg(test)]
 mod test {
@@ -296,6 +302,14 @@ mod test {
         assert!(sm.contains("chr1"));
         assert!(sm.contains("chr2"));
         assert!(!sm.contains("chrX"));
+    }
+
+    #[test]
+    fn test_genomemap_shrink() {
+        let mut sm: GenomeMap<i32> = GenomeMap::new();
+        sm.insert("chr1", 1).unwrap();
+        sm.insert("chr2", 2).unwrap();
+        sm.shrink_to_fit();
     }
 
     #[test]
@@ -361,10 +375,8 @@ mod test {
         assert_eq!(*sm.get("chr2").unwrap(), 2);
         assert_eq!(sm.get("chr3"), None);
 
-        assert_eq!(
-            *sm.get_by_index(chr1_idx.unwrap()).unwrap(), 1);
-        assert_eq!(
-            *sm.get_by_index(chr2_idx.unwrap()).unwrap(), 2);
+        assert_eq!(*sm.get_by_index(chr1_idx.unwrap()).unwrap(), 1);
+        assert_eq!(*sm.get_by_index(chr2_idx.unwrap()).unwrap(), 2);
     }
 
     #[test]
@@ -379,7 +391,6 @@ mod test {
         assert_eq!(sm.get_name_by_index(index).unwrap(), "chr1");
     }
 
- 
     #[test]
     fn test_map_get_name_by_index() {
         let mut sm: GenomeMap<i32> = GenomeMap::new();
@@ -424,9 +435,7 @@ mod test {
 
         let expected_order = vec!["1", "2", "22", "X", "Y", "Mt"];
         assert_eq!(sm.names(), expected_order);
-
     }
-
 
     #[test]
     fn test_sorting_drosophila() {
@@ -441,6 +450,5 @@ mod test {
 
         let expected_order = vec!["chr1", "chr2L", "chr2R", "chr4", "chrX", "chrY"];
         assert_eq!(sm.names(), expected_order);
-
     }
 }
