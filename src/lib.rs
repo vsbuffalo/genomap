@@ -53,8 +53,6 @@
 //!
 //! [`GenomeMap.insert()`]: crate::GenomeMap::insert
 
-
-
 use fnv::FnvBuildHasher;
 use std::{cmp::Ordering, collections::HashMap};
 use thiserror::Error;
@@ -120,6 +118,11 @@ impl<T> GenomeMap<T> {
     /// Retrieve a reference to the value stored for `name`, if it is present, else `None`.
     pub fn get(&self, name: &str) -> Option<&T> {
         self.lookup.get(name).map(|idx| &self.values[*idx])
+    }
+
+    /// Retrieve a *mutable* reference to the value stored for `name`, if it is present, else `None`.
+    pub fn get_mut(&mut self, name: &str) -> Option<&mut T> {
+        self.lookup.get_mut(name).map(|idx| &mut self.values[*idx])
     }
 
     /// Retrieve a reference to the value stored for the specified `index`.
@@ -377,6 +380,18 @@ mod test {
         assert_eq!(*vec_chr1.unwrap(), vec![1, 2]);
 
         assert_eq!(sm.len(), 2);
+    }
+
+    #[test]
+    fn test_genomemap_get_mut() {
+        let mut sm: GenomeMap<i32> = GenomeMap::new();
+        sm.insert("chr1", 1).unwrap();
+        sm.insert("chr2", 2).unwrap();
+
+        assert_eq!(*sm.get("chr1").unwrap(), 1);
+        let val = sm.get_mut("chr1").unwrap();
+        *val = 10;
+        assert_eq!(*sm.get("chr1").unwrap(), 10);
     }
 
     #[test]
