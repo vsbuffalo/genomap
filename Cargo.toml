@@ -10,6 +10,18 @@ fnv = "1.0.7"
 thiserror = "1.0.56"
 
 [dev-dependencies]
-criterion = "0.5.1"
+criterion = { version = "0.5.1", features = ["html_reports", "csv", "csv_output"] }
+fnv = "1.0.7"
+indexmap = "2.2.2"
 rand = "0.8.5"
 
+
+[[bench]]
+name = "comparison"
+harness = false
+
+[profile.release]
+opt-level = 3
+
+[profile.dev]
+opt-level = 3

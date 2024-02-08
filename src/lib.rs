@@ -265,14 +265,7 @@ fn chromosome_probe(name: &str, target: &str) -> Ordering {
 
 #[cfg(test)]
 mod test {
-    use rand::{thread_rng, Rng};
     use super::GenomeMap;
-
-    /// Sample a random chromosome
-    pub fn random_chrom(nmax: usize) -> String {
-        let mut rng = thread_rng();
-        format!("chr{}", rng.gen_range(1..=nmax))
-    }
 
     #[test]
     fn test_genomemap_new() {
@@ -374,6 +367,19 @@ mod test {
             *sm.get_by_index(chr2_idx.unwrap()).unwrap(), 2);
     }
 
+    #[test]
+    fn test_map_get_name_by_index_and_name() {
+        let mut sm: GenomeMap<i32> = GenomeMap::new();
+        sm.insert("chr1", 1).unwrap();
+        sm.insert("chr2", 2).unwrap();
+
+        let index = sm.get_index_by_name("chr1").unwrap();
+        assert_eq!(*sm.get_by_index(index).unwrap(), 1);
+
+        assert_eq!(sm.get_name_by_index(index).unwrap(), "chr1");
+    }
+
+ 
     #[test]
     fn test_map_get_name_by_index() {
         let mut sm: GenomeMap<i32> = GenomeMap::new();
