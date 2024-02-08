@@ -1,6 +1,45 @@
-//! A fast, ordered map-like data structure for storing genomic data
-//! associated with chromosomes.
+//! A fast, ordered map-like data structure for storing genomic data associated with chromosomes.
 //!
+//! The only data structure is a [`GenomeMap`] that is like an [`HashMap`], but with
+//! the chromosome name keys automatically ordered according to the usual biological order
+//! (see below for details). Unlike `HashMap`, `GenomeMap` will also not let you clobber
+//! existing entries with [`GenomeMap.insert()`] by raising an error. Here is a basic example:
+//!
+//! ```
+//! use genomap::GenomeMap;
+//!
+//! let mut sm: GenomeMap<i32> = GenomeMap::new();
+//! sm.insert("chr1", 1).unwrap();
+//! sm.insert("chr2", 2).unwrap();
+//! println!("{:?}", sm.get("chr1"));
+//! ```
+//!
+//! In Rust, since working with non-`Copy`able types (such as a `String` chromosome name)
+//! can necessitate generic lifetime annotations or cloning. This can clutter code
+//! and increase complexity, or decrease performance. To alleviate this, `genomap` supports *O(1)* access
+//! by a `usize` index corresponding to the key at that index in the sorted names. This
+//! index can be stored in a `Struct`, which prevents (1) cloning lots of `String` names and (2)
+//! managing the lifetimes to `&str` in types.
+//!
+//! ```
+//! use genomap::GenomeMap;
+//!
+//! let mut sm: GenomeMap<i32> = GenomeMap::new();
+//! sm.insert("chr1", 1).unwrap();
+//! sm.insert("chr2", 2).unwrap();
+//!
+//! for (name, value) in sm.iter() {
+//!    println!("{} -> {}", name, value);
+//! }
+//!
+//! let index = sm.get_index_by_name("chr1").unwrap();
+//! assert_eq!(index, 0);
+//!
+//! assert_eq!(sm.get_name_by_index(index).unwrap(), "chr1");
+//!
+//! ```
+//!
+//! ## chromosome Name Ordering
 //!
 //! This sorts the names (e.g. chromosome or contig name) by doing the following:
 //! 1. Remove 'chr' if present.
@@ -10,7 +49,7 @@
 //!    then everything else.
 //!
 //! If the ordering created by this system is not what you'd expect for your organism, please
-//! file an issue on GitHub: http://github.com/vsbuffalo/genomemap/issues
+//! file an issue on GitHub: <http://github.com/vsbuffalo/genomemap/issues>
 
 use fnv::FnvBuildHasher;
 use std::{cmp::Ordering, collections::HashMap};
@@ -110,7 +149,7 @@ impl<T> GenomeMap<T> {
         self.sorted_keys.clone()
     }
 
-    /// Get the length of the [`SequenceMap`].
+    /// Get the length of the [`GenomeMap`].
     pub fn len(&self) -> usize {
         let len = self.lookup.len();
         assert_eq!(len, self.values.len());
@@ -237,7 +276,7 @@ where
 /// 2. See if the remaining bit is a number - if so, that comes first.
 /// 3. Then, letters. But: order common sex chromosome names (X, Y, M, Z, W, O), then mitochondria,
 ///    then everything else.
-fn chromosome_probe(name: &str, target: &str) -> Ordering {
+pub fn chromosome_probe(name: &str, target: &str) -> Ordering {
     let extract_parts = |chr: &str| -> (u8, Option<u32>, String, u8) {
         let chr_trimmed = chr.trim_start_matches("chr");
         match chr_trimmed {

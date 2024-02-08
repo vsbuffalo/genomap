@@ -1,13 +1,13 @@
 ![example workflow](https://github.com/vsbuffalo/genomap/actions/workflows/rust.yml/badge.svg)
 
-# `genomap` - A simple Rust library for storing data indexed by a chromosome name
+# A simple Rust library for storing data indexed by a chromosome name
 
-*genomap* is a small library for storing a key-value map between chromosome
+genomap is a small library for storing a key-value map between chromosome
 names and some generic data in a `GenomeMap`. Since in nearly every case we
 want chromosomes to be sorted by their names, `GenomeMap` maintains an internal
 sorted set of keys. `GenomeMap` uses a specialized chromosome name sorting
 function that should properly sort autosomes, sex chromosomes, handle
-Drosophila chromosome names (e.g. 2L and 2R), etc. Please file [a GitHub
+Drosophila Chromosome names (e.g. 2L and 2R), etc. Please file [a GitHub
 issue](http://github.com/vsbuffalo/genomemap/issues) if the sort order is not
 as you'd anticipate.
 
