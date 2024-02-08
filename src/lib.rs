@@ -39,7 +39,7 @@
 //!
 //! ```
 //!
-//! ## chromosome Name Ordering
+//! ## Chromosome Name Ordering
 //!
 //! This sorts the names (e.g. chromosome or contig name) by doing the following:
 //! 1. Remove 'chr' if present.

@@ -1,4 +1,4 @@
-![example workflow](https://github.com/vsbuffalo/genomap/actions/workflows/rust.yml/badge.svg)
+![Crates.io](https://img.shields.io/crates/v/genomap) ![Crates.io](https://img.shields.io/crates/d/genomap) [![docs](https://docs.rs/genomap/badge.svg)](https://docs.rs/genomap) ![Rust CI](https://github.com/vsbuffalo/genomap/actions/workflows/rust.yml/badge.svg)
 
 # A simple Rust library for storing data indexed by a chromosome name
 
@@ -14,6 +14,32 @@ as you'd anticipate.
 Internally, the data stored in a `genomap::GenomeMap<T>` is in a `Vec<T>`, and
 the type maintains a sorted list of chromosome names, and a forward and reverse
 lookup table that associated the position in the `Vec` to the chromosome's name.
+
+Below is a code example:
+
+
+```rust
+use genomap::GenomeMap;
+
+let mut sm: GenomeMap<i32> = GenomeMap::new();
+sm.insert("chr1", 1).unwrap();
+sm.insert("chr2", 2).unwrap();
+
+// get a reference to a value by name
+println!("{:?}", sm.get("chr1"));
+
+// iterate through name/values
+for (name, value) in sm.iter() {
+   println!("{} -> {}", name, value);
+}
+
+// get the index for a chromosome name
+let index = sm.get_index_by_name("chr1").unwrap();
+assert_eq!(index, 0);
+
+// get a name by index
+assert_eq!(sm.get_name_by_index(index).unwrap(), "chr1");
+```
 
 In Rust, working with non-`Copy`able types, such as a `String` chromosome name
 key, can necessitate generic lifetime annotations. This can clutter code and
