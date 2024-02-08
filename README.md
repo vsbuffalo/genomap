@@ -1,3 +1,5 @@
+![example workflow](https://github.com/vsbuffalo/genomap/actions/workflows/rust.yml/badge.svg)
+
 # `genomap` - A simple Rust library for storing data indexed by a chromosome name
 
 *genomap* is a small library for storing a key-value map between chromosome
