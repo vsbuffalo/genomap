@@ -1,4 +1,5 @@
-[![Crates.io](https://img.shields.io/crates/v/genomap)](https://crates.io/crates/genomap) [![Crates.io](https://img.shields.io/crates/d/genomap)](https://crates.io/crates/genomap) [![docs](https://docs.rs/genomap/badge.svg)](https://docs.rs/genomap) [![Rust CI](https://github.com/vsbuffalo/genomap/actions/workflows/rust.yml/badge.svg)](https://github.com/vsbuffalo/genomap/actions)
+[![Crates.io](https://img.shields.io/crates/v/genomap)](https://crates.io/crates/genomap) [![Crates.io](https://img.shields.io/crates/d/genomap)](https://crates.io/crates/genomap) [![docs](https://docs.rs/genomap/badge.svg)](https://docs.rs/genomap) [![Rust CI](https://github.com/vsbuffalo/genomap/actions/workflows/rust.yml/badge.svg)](https://github.com/vsbuffalo/genomap/actions) [![DOI](https://zenodo.org/badge/754408774.svg)](https://zenodo.org/doi/10.5281/zenodo.10653718)
+
 
 
 # A simple Rust library for storing data indexed by a chromosome name
