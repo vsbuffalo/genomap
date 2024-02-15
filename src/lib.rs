@@ -254,6 +254,21 @@ impl<T> GenomeMap<T> {
     }
 }
 
+impl<T> IntoIterator for GenomeMap<T> {
+    type Item = (String, T);
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    /// Make a consuming iterator over the `(String, T)` keys and values.
+    fn into_iter(self) -> Self::IntoIter {
+        let pairs = self
+            .sorted_keys
+            .into_iter()
+            .zip(self.values)
+            .collect::<Vec<_>>();
+        pairs.into_iter()
+    }
+}
+
 /// For `collect()`ing name-value tuples into a new [`GenomeMap`].
 ///
 /// # Panics
@@ -511,5 +526,16 @@ mod test {
 
         let expected_order = vec!["chr1", "chr2L", "chr2R", "chr4", "chrX", "chrY"];
         assert_eq!(sm.names(), expected_order);
+    }
+
+    #[test]
+    fn test_into_iter() {
+        let mut sm: GenomeMap<i32> = GenomeMap::new();
+        sm.insert("chr1", 1).unwrap();
+        sm.insert("chr2", 2).unwrap();
+        let mut iter = sm.into_iter();
+        assert_eq!(iter.next(), Some(("chr1".to_string(), 1)));
+        assert_eq!(iter.next(), Some(("chr2".to_string(), 2)));
+        assert!(iter.next().is_none());
     }
 }
