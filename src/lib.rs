@@ -176,13 +176,45 @@ impl<T> GenomeMap<T> {
         }
     }
 
+    /// Remove an entry from the GenomeMap by its key (chromosome name).
+    /// Returns the value if the key was present in the map, or None if it wasn't.
+    pub fn remove(&mut self, name: &str) -> Option<T> {
+        if let Some(&index) = self.lookup.get(name) {
+            // Remove from lookup
+            self.lookup.remove(name);
+
+            // Remove from sorted_keys
+            if let Ok(sorted_index) = self.sorted_keys.binary_search(&name.to_string()) {
+                self.sorted_keys.remove(sorted_index);
+            }
+
+            // Remove the value
+            let value = self.values.remove(index);
+
+            // Update indices for all elements after the removed one
+            for i in index..self.values.len() {
+                if let Some(chrom_name) = self.reverse_lookup.get(&(i + 1)) {
+                    self.lookup.insert(chrom_name.clone(), i);
+                    self.reverse_lookup.insert(i, chrom_name.clone());
+                }
+            }
+
+            // Remove the last reverse_lookup entry
+            self.reverse_lookup.remove(&self.values.len());
+
+            Some(value)
+        } else {
+            None
+        }
+    }
+
     /// O(1) check if a particular name is in the container.
     pub fn contains(&self, name: &str) -> bool {
         self.lookup.contains_key(name)
     }
 
     /// Insert a value into the [`GenomeMap`] for the given name. Will error if an entry
-    /// with this name already exists, since.
+    /// with this name already exists.
     pub fn insert(&mut self, name: &str, value: T) -> Result<usize, GenomeMapError> {
         if self.contains(name) {
             return Err(GenomeMapError::SequenceMapContainsSeqname(name.to_string()));
@@ -537,5 +569,70 @@ mod test {
         assert_eq!(iter.next(), Some(("chr1".to_string(), 1)));
         assert_eq!(iter.next(), Some(("chr2".to_string(), 2)));
         assert!(iter.next().is_none());
+    }
+
+    #[test]
+    fn test_genomemap_remove() {
+        let mut sm: GenomeMap<i32> = GenomeMap::new();
+        sm.insert("chr1", 1).unwrap();
+        sm.insert("chr2", 2).unwrap();
+        sm.insert("chr3", 3).unwrap();
+        sm.insert("chrX", 4).unwrap();
+        sm.insert("chrY", 5).unwrap();
+
+        // Test removal of existing entry
+        assert_eq!(sm.remove("chr2"), Some(2));
+        assert_eq!(sm.len(), 4);
+        assert!(!sm.contains("chr2"));
+
+        // Test removal of non-existing entry
+        assert_eq!(sm.remove("chr4"), None);
+        assert_eq!(sm.len(), 4);
+
+        // Check if remaining entries are still valid and in correct order
+        assert_eq!(sm.names(), vec!["chr1", "chr3", "chrX", "chrY"]);
+        assert_eq!(*sm.get("chr1").unwrap(), 1);
+        assert_eq!(*sm.get("chr3").unwrap(), 3);
+        assert_eq!(*sm.get("chrX").unwrap(), 4);
+        assert_eq!(*sm.get("chrY").unwrap(), 5);
+
+        // Test removal of first entry
+        assert_eq!(sm.remove("chr1"), Some(1));
+        assert_eq!(sm.len(), 3);
+        assert_eq!(sm.names(), vec!["chr3", "chrX", "chrY"]);
+
+        // Test removal of last entry
+        assert_eq!(sm.remove("chrY"), Some(5));
+        assert_eq!(sm.len(), 2);
+        assert_eq!(sm.names(), vec!["chr3", "chrX"]);
+
+        // Check if indices are still correct
+        assert_eq!(sm.get_index_by_name("chr3"), Some(0));
+        assert_eq!(sm.get_index_by_name("chrX"), Some(1));
+    }
+
+    #[test]
+    fn test_genomemap_remove_and_insert() {
+        let mut sm: GenomeMap<i32> = GenomeMap::new();
+        sm.insert("chr1", 1).unwrap();
+        sm.insert("chr2", 2).unwrap();
+        sm.insert("chr3", 3).unwrap();
+
+        // Remove middle entry
+        sm.remove("chr2");
+
+        // Insert new entry
+        sm.insert("chr4", 4).unwrap();
+
+        // Check if order and values are correct
+        assert_eq!(sm.names(), vec!["chr1", "chr3", "chr4"]);
+        assert_eq!(*sm.get("chr1").unwrap(), 1);
+        assert_eq!(*sm.get("chr3").unwrap(), 3);
+        assert_eq!(*sm.get("chr4").unwrap(), 4);
+
+        // Check indices
+        assert_eq!(sm.get_index_by_name("chr1"), Some(0));
+        assert_eq!(sm.get_index_by_name("chr3"), Some(1));
+        assert_eq!(sm.get_index_by_name("chr4"), Some(2));
     }
 }
