@@ -156,6 +156,11 @@ impl<T> GenomeMap<T> {
         self.sorted_keys.clone()
     }
 
+    /// Get a slice of references to the ordered names.
+    pub fn names_ref(&self) -> &[String] {
+        &self.sorted_keys
+    }
+
     /// Get the length of the [`GenomeMap`].
     pub fn len(&self) -> usize {
         let len = self.lookup.len();
